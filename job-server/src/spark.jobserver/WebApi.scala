@@ -466,8 +466,10 @@ class WebApi(system: ActorSystem,
                       JobManagerActor.StartJob(appName, classPath, jobConfig, events))(timeout)
                     respondWithMediaType(MediaTypes.`application/json`) { ctx =>
                       future.map {
-                        case JobResult(_, res)       => ctx.complete(resultToTable(res))
-                        case JobErroredOut(_, _, ex) => ctx.complete(errMap(ex, "ERROR"))
+                        case JobResult(jobId, res)       => ctx.complete(
+                            Map[String, Any]("jobId" -> jobId) ++ resultToTable(res))
+                        case JobErroredOut(jobId, _, ex) => ctx.complete(
+                            Map[String, String]("jobId" -> jobId) ++ errMap(ex, "ERROR"))
                         case JobStarted(jobId, context, _) =>
                           jobInfo ! StoreJobConfig(jobId, postedJobConfig)
                           ctx.complete(202, Map[String, Any](
